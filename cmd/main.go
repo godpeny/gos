@@ -33,9 +33,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed opening connection to db: %v", err)
 	}
-
+	defer entClient.Close()
 	// Run the auto migration tool.
-	if err := entClient.Schema.Create(context.Background()); err != nil {
+	if err = entClient.Schema.Create(context.Background()); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
