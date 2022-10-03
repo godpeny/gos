@@ -2,9 +2,13 @@ SHELL := /bin/zsh
 REGISTRY ?= idock.daumkakao.io/kargo
 VERSION ?= latest
 
-.PHONY: dev-run
-dev-run:
-	go run cmd/main.go
+.PHONY: run-server-dev
+run-server-dev:
+	go run cmd/server/main.go
+
+.PHONY: run-client-dev
+run-server-dev:
+	go run cmd/client/main.go
 
 .PHONY: codegen
 codegen:

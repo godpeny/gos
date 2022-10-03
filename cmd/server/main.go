@@ -1,25 +1,21 @@
 package main
 
 import (
-	context "context"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 
-	"google.golang.org/grpc/grpclog"
-
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-
-	delivery_grpc "github.com/godpeny/gos/delivery/grpc"
-	server_grpc "github.com/godpeny/gos/delivery/grpc/server"
+	_ "github.com/go-sql-driver/mysql"
+	deliveryGRPC "github.com/godpeny/gos/delivery/grpc"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 
 	"github.com/godpeny/gos/ent"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/alts"
-
-	_ "github.com/go-sql-driver/mysql"
+	"google.golang.org/grpc/grpclog"
 )
 
 var (
@@ -44,9 +40,8 @@ func main() {
 	// set grpc
 	altsTC := alts.NewServerCreds(alts.DefaultServerOptions())
 	grpcServer := grpc.NewServer(grpc.Creds(altsTC))
-
-	newServer := &server_grpc.GosServer{DB: entClient}
-	delivery_grpc.RegisterDeliveryServer(grpcServer, newServer.Server)
+	// register multiple services
+	deliveryGRPC.RegisterUserServiceServer(grpcServer, deliveryGRPC.NewUserService(entClient))
 
 	wrappedServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool {
 		// Allow all origins, DO NOT do this in production
