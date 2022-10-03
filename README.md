@@ -6,7 +6,7 @@ codegen(deepmap)
 ent
 generic
 
-clean archtecture (https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+clean architecture (https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 
 - entity (== model)
 - (entity_handler == <repository>)
@@ -15,6 +15,13 @@ clean archtecture (https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-ar
 
 usecase 인터페이스 구현 <-> delivery와 커뮤니케이션
 entity_handler 인터페이스 구현 <-> usecase 와 커뮤니케이션 (아마도?)
+
+## Prerequisite
+```shell
+$ brew install protobuf
+$ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+$ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+```
 
 ## Dev Env
 ### db
@@ -25,18 +32,12 @@ $ docker run --name mysql -e MYSQL_ROOT_PASSWORD=toor -d -p 3306:3306 mysql:late
 ### ent
 ```shell
 $ go get -d entgo.io/ent/cmd/ent
-$ go run -mod=mod entgo.io/ent/cmd/ent init User
-```
-#### ent grpc
-```shell
-$ brew install protobuf
-$ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-$ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+$ go run -mod=mod entgo.io/ent/cmd/ent init User # create entity 'user'.
+$ go generate ./... # generate grpc proto file with entgo.
 ```
 
-
-### run protoc
-
+### ~~run protoc~~
+replaced with entgo.
 ```shell
 $ protoc --go_out=. --go_opt=paths=source_relative \
    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
