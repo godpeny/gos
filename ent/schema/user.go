@@ -27,10 +27,12 @@ func (User) Fields() []ent.Field {
 				entproto.Field(3),
 			),
 		field.Time("updated_at").
+			Optional().
 			Annotations(
 				entproto.Field(4),
 			),
 		field.Time("deleted_at").
+			Optional().
 			Annotations(
 				entproto.Field(5),
 			),

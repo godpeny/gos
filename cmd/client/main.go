@@ -8,17 +8,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"log"
 	"math/rand"
 )
 
-const (
-	defaultName = "world"
-)
-
 var (
-	addr = flag.String("addr", "localhost:8001", "the address to connect to")
-	name = flag.String("name", defaultName, "Name to greet")
+	addr = flag.String("addr", "localhost:8080", "the address to connect to")
 )
 
 func main() {
@@ -44,7 +40,7 @@ func main() {
 	}
 	log.Printf("user created with id: %d", created.Id)
 
-	// On a separate RPC invocation, retrieve the user we saved previously.
+	// On a separate RPC invocation, retrieve the user we saved previously.==
 	get, err := client.Get(ctx, &deliveryGRPC.GetUserRequest{
 		Id: created.Id,
 	})
@@ -55,8 +51,13 @@ func main() {
 	log.Printf("retrieved user with id=%d: %v", get.Id, get)
 }
 
+// randomUser 'CreatedAt' field has to be filled,
+// although 'Default' flag is set as 'time.now' in ent-go.
+// it is due to grpc-go issue in Apple Silicon architecture.
+// https://github.com/grpc/grpc-go/blob/c03925db8d3c8adf6c6f708b5f9ef054de019749/internal/syscall/syscall_nonlinux.go#L39
 func randomUser() *deliveryGRPC.User {
 	return &deliveryGRPC.User{
-		Username: fmt.Sprintf("user_%d", rand.Int()),
+		Username:  fmt.Sprintf("user_%d", rand.Int()),
+		CreatedAt: timestamppb.Now(),
 	}
 }

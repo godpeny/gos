@@ -50,7 +50,8 @@ https://go.dev/doc/tutorial/generics#prerequisites
 https://github.com/improbable-eng/grpc-web/blob/master/client/grpc-web-react-example/go/exampleserver/exampleserver.go  
 https://github.com/easyCZ/grpc-web-hacker-news/blob/master/server/main.go  
 https://github.com/floydjones1/grpc-chatApp-react  
-https://medium.com/geekculture/writing-a-simple-grpc-application-in-golang-from-scratch-6b70e8688f14  
+https://medium.com/geekculture/writing-a-simple-grpc-application-in-golang-from-scratch-6b70e8688f14
+https://github.com/grpc-ecosystem/grpc-gateway
 
 https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html  
 https://github.com/golang-standards/project-layout  

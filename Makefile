@@ -4,10 +4,11 @@ VERSION ?= latest
 
 .PHONY: run-server-dev
 run-server-dev:
+	go generate ./...
 	go run cmd/server/main.go
 
 .PHONY: run-client-dev
-run-server-dev:
+run-client-dev:
 	go run cmd/client/main.go
 
 .PHONY: codegen

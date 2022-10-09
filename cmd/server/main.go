@@ -2,28 +2,40 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"net/http"
-
-	"github.com/go-chi/chi"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"flag"
 	_ "github.com/go-sql-driver/mysql"
 	deliveryGRPC "github.com/godpeny/gos/delivery/grpc"
-	"github.com/improbable-eng/grpc-web/go/grpcweb"
-
 	"github.com/godpeny/gos/ent"
 	grpc "google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/alts"
 	"google.golang.org/grpc/grpclog"
+	"io"
+	"net"
+	"os"
 )
 
 var (
+	addr      = flag.String("addr", ":8080", "endpoint of the gRPC service")
+	network   = flag.String("network", "tcp", "a valid network type which is consistent to -addr")
 	enableTls = false
-	port      = 8000
 )
 
 func main() {
+	// set grpc logging
+	log := grpclog.NewLoggerV2(os.Stdout, io.Discard, io.Discard)
+	grpclog.SetLoggerV2(log)
+	log.Infoln("GRPC logger set up properly.")
+
+	// set up tcp server
+	lis, err := net.Listen(*network, *addr)
+	if err != nil {
+		log.Fatalf("error listening server : %v", err)
+	}
+	defer func() {
+		if err = lis.Close(); err != nil {
+			log.Fatalf("Failed to close %s %s: %v", *network, *addr, err)
+		}
+	}()
+
 	// set db
 	entClient, err := ent.Open("mysql", "root:toor@tcp(localhost:3306)/gos?charset=utf8&parseTime=True&loc=UTC")
 	if err != nil {
@@ -34,63 +46,42 @@ func main() {
 	if err = entClient.Schema.Create(context.Background()); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
+	log.Infoln("DB set up properly.")
 
-	log.Println("db set up properly")
-
-	// set grpc
-	altsTC := alts.NewServerCreds(alts.DefaultServerOptions())
-	grpcServer := grpc.NewServer(grpc.Creds(altsTC))
-	// register multiple services
-	deliveryGRPC.RegisterUserServiceServer(grpcServer, deliveryGRPC.NewUserService(entClient))
-
-	wrappedServer := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool {
-		// Allow all origins, DO NOT do this in production
-		return true
-	}))
-
-	log.Println("grpc set up properly")
-
-	// set router
-	router := chi.NewRouter()
-	router.Use(
-		chiMiddleware.Logger,
-		chiMiddleware.Recoverer,
-		newGrpcWebMiddleware(wrappedServer).Handler,
-	)
-
-	httpServer := http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: router,
-	}
-
+	// set up grpc
+	var opts []grpc.ServerOption
 	if enableTls {
 		// implement when tls enabled.
 		//
-		// if err := httpServer.ListenAndServeTLS(*tlsCertFilePath, *tlsKeyFilePath); err != nil {
-		// 	grpclog.Fatalf("failed starting http2 server: %v", err)
-		// }
-	} else {
-		log.Println("server running")
-		if err := httpServer.ListenAndServe(); err != nil {
-			grpclog.Fatalf("failed starting http server: %v", err)
-		}
+		//if *certFile == "" {
+		//	*certFile = data.Path("x509/server_cert.pem")
+		//}
+		//if *keyFile == "" {
+		//	*keyFile = data.Path("x509/server_key.pem")
+		//}
+		//creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
+		//if err != nil {
+		//	log.Fatalf("Failed to generate credentials %v", err)
+		//}
+		//opts = []grpc.ServerOption{grpc.Creds(creds)}
 	}
-}
+	grpcServer := grpc.NewServer(opts...)
+	// register multiple services
+	deliveryGRPC.RegisterUserServiceServer(grpcServer, deliveryGRPC.NewUserService(entClient))
+	log.Infoln("GRPC set up properly.")
 
-type GrpcWebMiddleware struct {
-	*grpcweb.WrappedGrpcServer
-}
+	// TODO(@godpeny): implementing graceful shutdown when received OS signals.
+	ctx := context.Background()
+	go func() {
+		defer func() {
+			log.Infoln("GRPC Server(TCP) gracefully shutting down...")
+			grpcServer.GracefulStop()
+		}()
+		<-ctx.Done()
+	}()
 
-func (m *GrpcWebMiddleware) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if m.IsAcceptableGrpcCorsRequest(r) || m.IsGrpcWebRequest(r) {
-			m.ServeHTTP(w, r)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func newGrpcWebMiddleware(grpcWeb *grpcweb.WrappedGrpcServer) *GrpcWebMiddleware {
-	return &GrpcWebMiddleware{grpcWeb}
+	log.Infoln("GRPC Server(TCP) running...")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed starting http server: %v", err)
+	}
 }

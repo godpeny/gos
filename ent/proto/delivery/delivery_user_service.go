@@ -119,10 +119,14 @@ func (svc *UserService) Update(ctx context.Context, req *UpdateUserRequest) (*Us
 	m := svc.client.User.UpdateOneID(userID)
 	userCreatedAt := runtime.ExtractTime(user.GetCreatedAt())
 	m.SetCreatedAt(userCreatedAt)
-	userDeletedAt := runtime.ExtractTime(user.GetDeletedAt())
-	m.SetDeletedAt(userDeletedAt)
-	userUpdatedAt := runtime.ExtractTime(user.GetUpdatedAt())
-	m.SetUpdatedAt(userUpdatedAt)
+	if user.GetDeletedAt() != nil {
+		userDeletedAt := runtime.ExtractTime(user.GetDeletedAt())
+		m.SetDeletedAt(userDeletedAt)
+	}
+	if user.GetUpdatedAt() != nil {
+		userUpdatedAt := runtime.ExtractTime(user.GetUpdatedAt())
+		m.SetUpdatedAt(userUpdatedAt)
+	}
 	userUsername := user.GetUsername()
 	m.SetUsername(userUsername)
 
@@ -258,10 +262,14 @@ func (svc *UserService) createBuilder(user *User) (*ent.UserCreate, error) {
 	m := svc.client.User.Create()
 	userCreatedAt := runtime.ExtractTime(user.GetCreatedAt())
 	m.SetCreatedAt(userCreatedAt)
-	userDeletedAt := runtime.ExtractTime(user.GetDeletedAt())
-	m.SetDeletedAt(userDeletedAt)
-	userUpdatedAt := runtime.ExtractTime(user.GetUpdatedAt())
-	m.SetUpdatedAt(userUpdatedAt)
+	if user.GetDeletedAt() != nil {
+		userDeletedAt := runtime.ExtractTime(user.GetDeletedAt())
+		m.SetDeletedAt(userDeletedAt)
+	}
+	if user.GetUpdatedAt() != nil {
+		userUpdatedAt := runtime.ExtractTime(user.GetUpdatedAt())
+		m.SetUpdatedAt(userUpdatedAt)
+	}
 	userUsername := user.GetUsername()
 	m.SetUsername(userUsername)
 	return m, nil
