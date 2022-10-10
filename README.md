@@ -18,30 +18,41 @@ entity_handler 인터페이스 구현 <-> usecase 와 커뮤니케이션 (아마
 
 ## Prerequisite
 ```shell
-$ brew install protobuf
-$ go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-$ go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+brew install protobuf
+go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 ```
 
 ## Dev Env
 ### db
 ```shell
-$ docker run --name mysql -e MYSQL_ROOT_PASSWORD=toor -d -p 3306:3306 mysql:latest
+docker run --name mysql -e MYSQL_ROOT_PASSWORD=toor -d -p 3306:3306 mysql:latest
 ```
 
 ### ent
 ```shell
-$ go get -d entgo.io/ent/cmd/ent
-$ go run -mod=mod entgo.io/ent/cmd/ent init User # create entity 'user'.
-$ go generate ./... # generate grpc proto file with entgo.
+go get -d entgo.io/ent/cmd/ent
+go run -mod=mod entgo.io/ent/cmd/ent init User # create entity 'user'.
+go generate ./... # generate grpc proto file with entgo.
+```
+
+### grpc-gateway
+See ``/internal/grpc-gateway/tools/tools.go`` for more details.  
+Run ``go mod tidy`` to resolve the versions, and Run : 
+```shell
+go install \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+    github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+    google.golang.org/protobuf/cmd/protoc-gen-go \
+    google.golang.org/grpc/cmd/protoc-gen-go-grpc
 ```
 
 ### ~~run protoc~~
-replaced with entgo.
+replaced with ent-go.
 ```shell
-$ protoc --go_out=. --go_opt=paths=source_relative \
-   --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-   delivery/grpc/app.proto
+protoc --go_out=. --go_opt=paths=source_relative \
+  --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+  delivery/grpc/delivery.proto
 ```
 
 

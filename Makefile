@@ -4,12 +4,33 @@ VERSION ?= latest
 
 .PHONY: run-server-dev
 run-server-dev:
-	go generate ./...
-	go run cmd/server/main.go
+	@echo "Running go generate ./..."
+	@go generate ./...
+	@echo "Running Server ..."
+	@go run cmd/server/main.go
 
 .PHONY: run-client-dev
 run-client-dev:
-	go run cmd/client/main.go
+	@go run cmd/client/main.go
+
+.PHONY: run-reverse-proxy-server
+run-reverse-proxy-server:
+	@echo "Running Reverse Proxy Server ..."
+	@go run cmd/reverse-proxy-server/main.go
+
+.PHONY: protoc-ts
+protoc-ts:
+	@protoc --go_out=. --go_opt=paths=source_relative \
+       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+       delivery/grpc/delivery.proto
+
+.PHONY: reverse-proxy
+reverse-proxy:
+	@protoc -I . --grpc-gateway_out .. \
+        --grpc-gateway_opt logtostderr=true \
+        --grpc-gateway_opt paths=source_relative \
+        --grpc-gateway_opt generate_unbound_methods=true \
+       delivery/grpc/delivery.proto
 
 .PHONY: codegen
 codegen:
@@ -25,11 +46,9 @@ codegen:
 run-server: codegen
 	source env-local.sh && go run cmd/kargo-server/main.go
 
-
 .PHONY: build
 build:
 	DOCKER_BUILDKIT=1 docker build --build-arg GITHUB_USER_TOKEN -t $(REGISTRY)/kargo-server:$(VERSION) -f dockerfiles/Dockerfile .
-
 
 # generate mock files for unit tests
 .PHONY: mockgen
